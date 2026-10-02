@@ -1,3 +1,5 @@
+import Product from '../models/productModel.js';
+
 export const getProducts = async (req, res) => {
   try {
     const { page = 1, perPage = 20, category } = req.query;
