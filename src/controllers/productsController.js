@@ -1,22 +1,51 @@
 import { Product } from '../models/product.js';
 
 export const getProducts = async (req, res) => {
-  const { page = 1, perPage = 20 } = req.query;
+  try {
+    const { page = 1, perPage = 20, groupBy } = req.query;
 
-  const pageNumber = Number(page);
-  const perPageNumber = Number(perPage);
-  const skip = (pageNumber - 1) * perPageNumber;
+    const pageNumber = Number(page);
+    const perPageNumber = Number(perPage);
+    const skip = (pageNumber - 1) * perPageNumber;
 
-  const [totalItems, products] = await Promise.all([
-    Product.countDocuments(),
-    Product.find().sort({ _id: 1 }).skip(skip).limit(perPageNumber),
-  ]);
+    if (!groupBy) {
+      const [totalItems, products] = await Promise.all([
+        Product.countDocuments(),
+        Product.find().sort({ _id: 1 }).skip(skip).limit(perPageNumber),
+      ]);
 
-  res.status(200).json({
-    page: pageNumber,
-    perPage: perPageNumber,
-    totalItems,
-    totalPages: Math.ceil(totalItems / perPageNumber),
-    products,
-  });
+      return res.status(200).json({
+        page: pageNumber,
+        perPage: perPageNumber,
+        totalItems,
+        totalPages: Math.ceil(totalItems / perPageNumber),
+        products,
+      });
+    }
+
+    const pipeline = [
+      { $sort: { [groupBy]: 1, _id: 1 } },      
+      {
+        $facet: {
+          metadata: [{ $count: 'totalItems' }],
+          products: [{ $skip: skip }, { $limit: perPageNumber }],
+        },
+      },
+    ];
+
+    const result = await Product.aggregate(pipeline);
+
+    const totalItems = result[0].metadata[0]?.totalItems || 0;
+    const products = result[0].products;
+
+    res.status(200).json({
+      page: pageNumber,
+      perPage: perPageNumber,
+      totalItems,
+      totalPages: Math.ceil(totalItems / perPageNumber),
+      products,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 };
