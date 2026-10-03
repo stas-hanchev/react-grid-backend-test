@@ -1,53 +1,33 @@
 import { Product } from '../models/product.js';
+import { getSubtreeIds } from '../services/categories.js';
 
 export const getProducts = async (req, res) => {
-  try {
-    const { page = 1, perPage = 20, category } = req.query;
+  const { page = 1, perPage = 20, category, categoryId } = req.query;
 
-    const pageNumber = Number(page);
-    const perPageNumber = Number(perPage);
-    const skip = (pageNumber - 1) * perPageNumber;
+  const pageNumber = Number(page);
+  const perPageNumber = Number(perPage);
+  const skip = (pageNumber - 1) * perPageNumber;
 
-    if (!category) {
-      const [totalItems, products] = await Promise.all([
-        Product.countDocuments(),
-        Product.find().sort({ _id: 1 }).skip(skip).limit(perPageNumber),
-      ]);
+  const filter = {};
 
-      return res.status(200).json({
-        page: pageNumber,
-        perPage: perPageNumber,
-        totalItems,
-        totalPages: Math.ceil(totalItems / perPageNumber),
-        products,
-      });
-    }
-
-    // Aggregation pipeline filtered by category
-    const pipeline = [
-      { $match: { category } },
-      { $sort: { _id: 1 } },
-      {
-        $facet: {
-          metadata: [{ $count: 'totalItems' }],
-          products: [{ $skip: skip }, { $limit: perPageNumber }],
-        },
-      },
-    ];
-
-    const result = await Product.aggregate(pipeline);
-
-    const totalItems = result[0].metadata[0]?.totalItems || 0;
-    const products = result[0].products || [];
-
-    return res.status(200).json({
-      page: pageNumber,
-      perPage: perPageNumber,
-      totalItems,
-      totalPages: Math.ceil(totalItems / perPageNumber),
-      products,
-    });
-  } catch (error) {
-    return res.status(500).json({ message: 'Server error', error: error.message });
+  if (category) {
+    filter.category = category;
   }
+
+  if (categoryId) {
+    filter.categoryId = { $in: await getSubtreeIds(Number(categoryId)) };
+  }
+
+  const [totalItems, products] = await Promise.all([
+    Product.countDocuments(filter),
+    Product.find(filter).sort({ _id: 1 }).skip(skip).limit(perPageNumber),
+  ]);
+
+  res.status(200).json({
+    page: pageNumber,
+    perPage: perPageNumber,
+    totalItems,
+    totalPages: Math.ceil(totalItems / perPageNumber),
+    products,
+  });
 };
