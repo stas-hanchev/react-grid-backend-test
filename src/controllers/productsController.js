@@ -1,4 +1,4 @@
-import Product from '../models/productModel.js';
+import { Product } from '../models/product.js';
 
 export const getProducts = async (req, res) => {
   try {
@@ -8,7 +8,6 @@ export const getProducts = async (req, res) => {
     const perPageNumber = Number(perPage);
     const skip = (pageNumber - 1) * perPageNumber;
 
-    // Default query without category filter
     if (!category) {
       const [totalItems, products] = await Promise.all([
         Product.countDocuments(),
