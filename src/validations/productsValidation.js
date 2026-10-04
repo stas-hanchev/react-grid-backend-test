@@ -1,4 +1,7 @@
-import { Joi, Segments } from 'celebrate';
+import {
+  Joi,
+  Segments
+} from 'celebrate';
 
 export const getProductsSchema = {
   [Segments.QUERY]: Joi.object({
@@ -6,5 +9,6 @@ export const getProductsSchema = {
     perPage: Joi.number().integer().min(1).max(100).default(20),
     category: Joi.string().trim().optional(),
     categoryId: Joi.number().integer().min(1).optional(),
+    sort: Joi.string().optional(),
   }),
 };
