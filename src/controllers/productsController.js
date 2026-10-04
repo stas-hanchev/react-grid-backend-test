@@ -3,7 +3,6 @@ import { getSubtreeIds } from '../services/categories.js';
 import { parseSort, SORT_COLLATION } from '../services/sorting.js';
 
 export const getProducts = async (req, res) => {
-    console.log('In getProducts controller');
     const { page = 1, perPage = 20, category, categoryId, sort } = req.query;
 
     const pageNumber = Number(page);
@@ -22,7 +21,6 @@ export const getProducts = async (req, res) => {
     }
 
     if (sort) {
-        console.log('In sort if section');
         Object.assign(sortBy, parseSort(sort));
     }
 
