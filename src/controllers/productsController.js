@@ -26,8 +26,6 @@ export const getProducts = async (req, res) => {
 
     sortBy._id = 1;
 
-    console.log('Request data: ', filter, sortBy, pageNumber, perPageNumber);
-
     const [totalItems, products] = await Promise.all([
         Product.countDocuments(filter),
         Product.find(filter)
