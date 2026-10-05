@@ -12,6 +12,7 @@ export const getProductsSchema = {
     perPage: Joi.number().integer().min(1).max(100).default(20),
     category: Joi.string().trim().optional(),
     categoryId: Joi.number().integer().min(1).optional(),
+    search: Joi.string().trim().max(100).allow('').optional(),
     sort: Joi.string().optional(),
   }),
 };
